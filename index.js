@@ -52,7 +52,6 @@ async function run() {
         // Middleware to verify JWT
         const verifyToken = async (req, res, next) => {
             try {
-                console.log('Inside verify token', req.headers.authorization);
                 if (!req.headers.authorization) {
                     return res.status(401).send({ message: "Forbidden access" });
                 }
@@ -134,16 +133,72 @@ async function run() {
             const result = await userCollection.deleteOne(query)
             res.send(result)
         })
-
-        app.get("/menu", async (req, res) => {
-            const result = await menuCollection.find().toArray()
+        app.get('/users/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await userCollection.findOne(query)
             res.send(result)
         })
+        //menu related apis
         app.post('/menu', verifyToken, verifyAdmin, async (req, res) => {
             const item = req.body
             const result = await menuCollection.insertOne(item)
             res.send(result)
         })
+        app.get("/menu", async (req, res) => {
+            const result = await menuCollection.find().toArray()
+            res.send(result)
+        })
+        app.get('/menu/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log('Received ID:', id); // Log the ID to verify
+        
+            try {
+                const query = { _id: new ObjectId(id) };
+                const result = await menuCollection.findOne(query);
+                console.log('Query Result:', result);
+        
+                if (!result) {
+                    return res.status(404).send({ message: 'Menu item not found' });
+                }
+        
+                res.send(result);
+            } catch (error) {
+                console.error('Error:', error);
+                res.status(500).send({ message: 'Server error' });
+            }
+        });
+        app.patch("/menu/:id", async (req, res) => {
+            const item = req.body
+            console.log(id)
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    name: item.name,
+                    category: item.category,
+                    price: item.price,
+                    recipe: item.recipe,
+                    image: item.image
+                }
+            }
+            console.log(updatedDoc)
+            const result = await menuCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
+
+
+     
+
+        app.delete('/menu/:id', async (req, res) => {
+            const id = req.params.id
+            console.log(id)
+            const query = { _id: new ObjectId(id) }
+            const result = await menuCollection.deleteOne(query)
+            res.send(result)
+        })
+
+
         app.get("/review", async (req, res) => {
             const result = await reviewCollection.find().toArray()
             res.send(result)
